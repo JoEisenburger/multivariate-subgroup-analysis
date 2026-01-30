@@ -1,6 +1,6 @@
 ## Code for the International Journal of Cancer
 
-This repository contains the R code used for the forest plot in the manuscript:
+This repository contains the R code used to generate the Kaplan-Meier survival curves and forest plots for the manuscript:
 
 "The Relevance of Curative-Intent Metastasectomy in Colorectal Cancer Patients: Real-World Insights from a Certified Comprehensive Cancer Center in Germany"
 
@@ -9,7 +9,7 @@ This repository contains the R code used for the forest plot in the manuscript:
 - Requored packages are listed in the scripts
 
 ### Data
-Data cannot beshared due to ethical restrictions
+The underlying data cannot be shared due to ethical and legal restrictions.
 
 ### How to run
-Open the R project in RStudio and run the main analysis scritps to reproduce the results.
+Open the R project in RStudio and execute the main analysis scritps to reproduce the results.

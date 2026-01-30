@@ -1,64 +1,68 @@
 # Forestplot for 18 Subgroups
 
 # --- Install packages once (if not already installed) ---
-if(!requireNamespace("ragg",   quietly=TRUE)) install.packages("ragg")
-if(!requireNamespace("forestplot", quietly=TRUE)) install.packages("forestplot")
-if(!requireNamespace("tibble", quietly=TRUE)) install.packages("tibble")
-if(!requireNamespace("magick", quietly=TRUE)) install.packages("magick")
+if (!requireNamespace("forestplot", quietly = TRUE)) install.packages("forestplot")
+if (!requireNamespace("tibble", quietly = TRUE))     install.packages("tibble")
 
-# --- Load libraries ---
-library(ragg)
+# --- Load Libraries ---
 library(forestplot)
 library(tibble)
-library(magick)
 
 # --- Your data ---
 # mean: Hazard Ratio
 # lower: lower 95% confidence interval
 # upper: upper 95% confidence interval
 
-base_data <- tibble::tibble(
-  mean  = c(0.54,0.51,0.48,0.58,0.52,0.50,0.45,0.52,0.52,0.57,0.67,0.41,0.55,0.49,0.62,0.49,0.60,0.31),
-  lower = c(0.33,0.34,0.29,0.38,0.29,0.34,0.16,0.37,0.36,0.31,0.44,0.26,0.38,0.27,0.38,0.32,0.43,0.11),
-  upper = c(0.88,0.77,0.78,0.89,0.93,0.74,1.24,0.73,0.76,1.04,1.02,0.67,0.80,0.90,1.00,0.75,0.84,0.88)
+base_data <- tibble(
+  mean  = c(0.36, 0.35, 0.78, 0.16, 0.25, 0.36, 0.00, 0.37, 0.41, 0.22, 0.32, 0.41, 0.39, 0.16, 0.41, 0.29, 0.31, 0.69),
+  lower = c(0.17, 0.19, 0.40, 0.07, 0.10, 0.21, 0.00, 0.24, 0.24, 0.09, 0.19, 0.17, 0.24, 0.04, 0.19, 0.16, 0.18, 0.26),
+  upper = c(0.73, 0.64, 1.54, 0.36, 0.59, 0.61, 0.00, 0.59, 0.71, 0.52, 0.54, 0.98, 0.64, 0.56, 0.87, 0.52, 0.51, 1.78)
 )
 
 # --- empty labels (same number of rows as data) ---
 empty_labels <- matrix("", nrow = nrow(base_data), ncol = 1)
 
 # --- Output parameters ---
-dpi <- 600
-width_in  <- 2.80   # Breite in Zoll (anpassen wenn du breiter willst)
-height_in <- 3.70    # Höhe in Zoll (gleich lassen falls gewünscht)
-outfile <- "forestplot_nur_daten_600dpi.png"
+width_in  <- 2.8
+height_in <- 3.7
+outfile   <- "forestplot_only_points_vector.pdf"
 
-# --- Open device (ragg, reliable) ---
-ragg::agg_png(filename = outfile,
-              width  = round(width_in * dpi),
-              height = round(height_in * dpi),
-              units  = "px",
-              res    = dpi)
+# PDF-Device (Vektor)
+pdf(
+  file = outfile,
+  width  = width_in,
+  height = height_in,
+  bg = "transparent",
+  useDingbats = FALSE
+)
 
-# --- Draw the plot (forestplot draws directly, no pipes) ---
+# --- Draw the plot 
 # Clip controls the x-axis range
 forestplot(
-  labeltext = empty_labels,        # no text on the left
+  labeltext = empty_labels,
   mean  = base_data$mean,
   lower = base_data$lower,
   upper = base_data$upper,
   zero  = 1,
-  clip  = c(0.1, 2.0),
+  clip  = c(0.03, 2.0),
   xlog  = TRUE,
+  
   boxsize = 0.18,
-  col = fpColors(box = "darkblue", line = "black", zero = "gray50"),
-  xlab = ""                         # no x-axis label
+  
+  col = fpColors(
+    box  = "darkblue",
+    line = "black",
+    zero = "gray60"
+  ),
+  
+  xlab = "",
+  graph.pos = 1,
+  new_page = TRUE
 )
 
-# --- Close the device (very important) ---
+# Close Devise
+
 dev.off()
 
-# --- Check ouptut info and open the file in viewer ---
-info <- image_info(image_read(outfile))
-print(info[, c("width", "height", "density")])
-message("File written: ", normalizePath(outfile))
-browseURL(normalizePath(outfile))   # opens the file automatically (in RStudio/OS)
+message("Saved as: ", normalizePath(outfile))
+browseURL(normalizePath(outfile))

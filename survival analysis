@@ -1,1 +1,151 @@
+#############################
+# Packages
+#############################
+# install.packages(c("survival", "survminer", "ggplot2"))
+
+library(survival)
+library(survminer)
+library(ggplot2)
+
+#############################
+# Dataset
+#############################
+dat <- PLT_SLT
+
+#############################
+# Column names
+#############################
+TIME_COL   <- "RF_time_m"
+STATUS_COL <- "PM_OS"
+GROUP_COL  <- "Paper"
+
+stopifnot(all(c(TIME_COL, STATUS_COL, GROUP_COL) %in% names(dat)))
+
+#############################
+# Data types and group labels
+#############################
+dat[[TIME_COL]]   <- as.numeric(dat[[TIME_COL]])
+dat[[STATUS_COL]] <- as.integer(as.character(dat[[STATUS_COL]]))
+
+dat[[GROUP_COL]] <- factor(
+  dat[[GROUP_COL]],
+  levels = c(1, 2),
+  labels = c("SM", "PM")
+)
+
+#############################
+# Remove missing values and
+# create clean analysis dataset
+#############################
+df2 <- dat[, c(TIME_COL, STATUS_COL, GROUP_COL)]
+df2 <- na.omit(df2)
+
+# Rename columns for clean model formulas
+df2 <- setNames(df2, c("time", "status", "group"))
+
+#############################
+# Kaplan–Meier model fit
+#############################
+fit_km <- survfit(Surv(time, status) ~ group, data = df2)
+
+#############################
+# Median survival by group
+# (robust extraction from survfit)
+#############################
+sfit <- summary(fit_km)$table
+
+# If only one group is present, convert vector to matrix
+if (is.null(dim(sfit))) {
+  sfit <- matrix(
+    sfit,
+    nrow = 1,
+    dimnames = list(names(fit_km$strata), names(sfit))
+  )
+}
+
+med_df <- data.frame(
+  group  = gsub("^group=", "", rownames(sfit)),
+  median = as.numeric(sfit[, "median"]),
+  stringsAsFactors = FALSE
+)
+
+# Match factor levels
+med_df$group <- factor(med_df$group, levels = levels(df2$group))
+
+# Remove groups where the median was not reached
+med_df <- med_df[is.finite(med_df$median), , drop = FALSE]
+
+#############################
+# Kaplan–Meier plot
+#############################
+p <- ggsurvplot(
+  fit_km,
+  data = df2,
+  risk.table = FALSE,
+  pval = FALSE,
+  conf.int = FALSE,
+  break.time.by = 12,
+
+  censor = TRUE,
+  censor.shape = 4,   # Cross symbol = vector-safe
+  censor.size  = 2.5,
+
+  ggtheme = theme_classic(
+    base_family = "Helvetica",
+    base_size   = 12
+  )
+)
+
+#############################
+# Add median reference lines
+# (horizontal and vertical,
+# dashed, black)
+#############################
+p$plot <- p$plot +
+  geom_segment(
+    data = med_df,
+    aes(x = 0, xend = median, y = 0.5, yend = 0.5),
+    inherit.aes = FALSE,
+    color = "black",
+    linetype = "dashed",
+    linewidth = 0.7
+  ) +
+  geom_segment(
+    data = med_df,
+    aes(x = median, xend = median, y = 0, yend = 0.5),
+    inherit.aes = FALSE,
+    color = "black",
+    linetype = "dashed",
+    linewidth = 0.7
+  )
+
+#############################
+# Ensure white background
+# (important for vector export
+# and Affinity compatibility)
+#############################
+p$plot <- p$plot +
+  theme(
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background  = element_rect(fill = "white", color = NA)
+  )
+
+#############################
+# PDF export (vector output
+# optimized for Affinity)
+#############################
+out <- "~/Desktop/KM_plot_vector.pdf"
+
+# cairo_pdf is often more robust than pdf() on macOS
+cairo_pdf(
+  filename = out,
+  width  = 7,
+  height = 5,
+  bg     = "white"
+)
+
+print(p$plot)
+dev.off()
+
+cat("Saved to:", out, "\n")
 

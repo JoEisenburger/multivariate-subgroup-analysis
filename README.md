@@ -1,6 +1,6 @@
 ## Code for the International Journal of Cancer
 
-This repository contains the R code used for the analyses in the manuscript:
+This repository contains the R code used for the forest plot in the manuscript:
 
 "The Relevance of Curative-Intent Metastasectomy in Colorectal Cancer Patients: Real-World Insights from a Certified Comprehensive Cancer Center in Germany"
 
